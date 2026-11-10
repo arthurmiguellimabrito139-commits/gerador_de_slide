@@ -1,3 +1,4 @@
+from io import BytesIO
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
@@ -15,47 +16,49 @@ cores = [
     RGBColor(255, 255, 0),    # 8 - amarelo
 ]
 
-cor_fundo = cores[0]
-cor_texto = cores[1]
 
-# 1. Ler o arquivo e dividir em blocos
-with open("exemplo.txt", "r", encoding="utf-8") as arquivo:
-    conteudo = arquivo.read()
+def gerar_slides(texto, cor_fundo, cor_texto):
+    conteudo_por_slide = texto.split("\n\n")
 
-conteudo_por_slide = conteudo.split("\n\n")
+    prs = Presentation()
+    prs.slide_width = Inches(13.333)
+    prs.slide_height = Inches(7.5)
 
-# 2. Criar a apresentação (uma vez só, fora do for)
-prs = Presentation()
-prs.slide_width = Inches(13.333)   # formato 16:9
-prs.slide_height = Inches(7.5)
+    for i in range(len(conteudo_por_slide)):
+        bloco = conteudo_por_slide[i].strip()
+        if bloco == "":
+            continue
 
-# 3. Um slide para cada bloco
-for i in range(len(conteudo_por_slide)):
-    bloco = conteudo_por_slide[i].strip()
-    if bloco == "":
-        continue
+        slide = prs.slides.add_slide(prs.slide_layouts[6])
 
-    slide = prs.slides.add_slide(prs.slide_layouts[6])  # slide em branco
+        fundo = slide.background.fill
+        fundo.solid()
+        fundo.fore_color.rgb = cor_fundo
 
-    # Fundo
-    fundo = slide.background.fill
-    fundo.solid()
-    fundo.fore_color.rgb = cor_fundo
+        caixa = slide.shapes.add_textbox(Inches(0), Inches(0), prs.slide_width, prs.slide_height)
+        quadro = caixa.text_frame
+        quadro.word_wrap = True
+        quadro.vertical_anchor = MSO_ANCHOR.MIDDLE
+        quadro.text = bloco
 
-    # Caixa de texto ocupando o slide inteiro
-    caixa = slide.shapes.add_textbox(Inches(0), Inches(0), prs.slide_width, prs.slide_height)
-    quadro = caixa.text_frame
-    quadro.word_wrap = True
-    quadro.vertical_anchor = MSO_ANCHOR.MIDDLE  # centraliza na vertical
-    quadro.text = bloco
+        for paragrafo in quadro.paragraphs:
+            paragrafo.alignment = PP_ALIGN.CENTER
+            paragrafo.font.size = Pt(54)
+            paragrafo.font.bold = True
+            paragrafo.font.color.rgb = cor_texto
 
-    # Formatar cada linha do bloco
-    for paragrafo in quadro.paragraphs:
-        paragrafo.alignment = PP_ALIGN.CENTER   # centraliza na horizontal
-        paragrafo.font.size = Pt(54)
-        paragrafo.font.bold = True
-        paragrafo.font.color.rgb = cor_texto
+    arquivo = BytesIO()
+    prs.save(arquivo)
+    return arquivo.getvalue()      # ← fim da função
 
-# 4. Salvar (fora do for)
-prs.save("slides.pptx")
+
+# ---------- teste (fora da função) ----------
+with open("exemplo.txt", "r", encoding="utf-8") as f:
+    texto = f.read()
+
+dados = gerar_slides(texto, cores[0], cores[1])
+
+with open("slides.pptx", "wb") as f:
+    f.write(dados)
+
 print("slides.pptx criado!")
