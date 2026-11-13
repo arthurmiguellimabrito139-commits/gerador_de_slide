@@ -3,6 +3,9 @@ from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
+from fastapi import FastAPI
+from fastapi.responses import Response
+from pydantic import BaseModel
 
 cores = [
     RGBColor(0, 0, 0),        # 0 - preto
@@ -51,14 +54,22 @@ def gerar_slides(texto, cor_fundo, cor_texto):
     prs.save(arquivo)
     return arquivo.getvalue()      # ← fim da função
 
+app = FastAPI()
+    
+class Pedido(BaseModel):
+        texto: str
+        cor_fundo: str
+        cor_texto: str
+        
+@app.post("/api/gerar_slides")
+def gerar(pedido: Pedido):
+        fundo = fundo = RGBColor.from_string(pedido.cor_fundo.replace("#", ""))
+        letra = RGBColor.from_string(pedido.cor_texto.replace("#", ""))
 
-# ---------- teste (fora da função) ----------
-with open("exemplo.txt", "r", encoding="utf-8") as f:
-    texto = f.read()
-
-dados = gerar_slides(texto, cores[0], cores[1])
-
-with open("slides.pptx", "wb") as f:
-    f.write(dados)
-
-print("slides.pptx criado!")
+        dados = gerar_slides(pedido.texto, fundo, letra)
+        
+        return Response(
+        content=dados,
+        media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        headers={"Content-Disposition": "attachment; filename=slides.pptx"},
+    )
