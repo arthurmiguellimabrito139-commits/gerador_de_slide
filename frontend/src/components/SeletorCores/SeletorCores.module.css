@@ -1,0 +1,23 @@
+.seletores {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.opcao {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.opcao input {
+  width: 44px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid #d3d8e2;
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+}

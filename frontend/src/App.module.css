@@ -1,0 +1,64 @@
+.pagina {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+.cabecalho {
+  margin-bottom: 24px;
+}
+
+.cabecalho h1 {
+  font-size: 28px;
+}
+
+.cabecalho p {
+  color: #5b6475;
+}
+
+/* Grid: duas colunas iguais lado a lado */
+.conteudo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;  /* cada coluna com a altura do próprio conteúdo */
+}
+
+.coluna {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.coluna h2 {
+  font-size: 18px;
+}
+
+.botoes {
+  display: flex;
+  gap: 12px;
+}
+
+/* A prévia rola sozinha quando há muitos slides */
+.previa {
+  max-height: 640px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.vazio {
+  color: #8a93a5;
+  text-align: center;
+  padding: 48px 0;
+}
+
+/* Celular / tela estreita: uma coluna só */
+@media (max-width: 800px) {
+  .conteudo {
+    grid-template-columns: 1fr;
+  }
+}

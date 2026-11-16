@@ -1,0 +1,28 @@
+.botao {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.botao:hover {
+  background: #1d4ed8;
+}
+
+.perigo {
+  background: #c0392b;
+}
+
+.perigo:hover {
+  background: #a93226;
+}
+
+.botao:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
