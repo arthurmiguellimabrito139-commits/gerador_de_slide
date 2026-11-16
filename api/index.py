@@ -3,9 +3,9 @@ from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 cores = [
     RGBColor(0, 0, 0),        # 0 - preto
@@ -20,18 +20,35 @@ cores = [
 ]
 
 
+def dividir_blocos(texto):
+    # Lê linha por linha: uma linha vazia (ou só com espaços) separa os slides.
+    # splitlines() também entende a quebra de linha do Windows (\r\n).
+    blocos = []
+    linhas_do_bloco = []
+
+    for linha in texto.splitlines():
+        if linha.strip() == "":
+            if len(linhas_do_bloco) > 0:
+                blocos.append("\n".join(linhas_do_bloco))
+                linhas_do_bloco = []
+        else:
+            linhas_do_bloco.append(linha.strip())
+
+    # o último bloco não tem linha vazia depois dele
+    if len(linhas_do_bloco) > 0:
+        blocos.append("\n".join(linhas_do_bloco))
+
+    return blocos
+
+
 def gerar_slides(texto, cor_fundo, cor_texto):
-    conteudo_por_slide = texto.split("\n\n")
+    conteudo_por_slide = dividir_blocos(texto)
 
     prs = Presentation()
     prs.slide_width = Inches(13.333)
     prs.slide_height = Inches(7.5)
 
-    for i in range(len(conteudo_por_slide)):
-        bloco = conteudo_por_slide[i].strip()
-        if bloco == "":
-            continue
-
+    for bloco in conteudo_por_slide:
         slide = prs.slides.add_slide(prs.slide_layouts[6])
 
         fundo = slide.background.fill
@@ -55,20 +72,28 @@ def gerar_slides(texto, cor_fundo, cor_texto):
     return arquivo.getvalue()      # ← fim da função
 
 app = FastAPI()
-    
+
+# Cor no formato "#RRGGBB" (o "#" é opcional). Ex.: "#000000", "ffd700"
+PADRAO_COR = r"^#?[0-9A-Fa-f]{6}$"
+
+
 class Pedido(BaseModel):
-        texto: str
-        cor_fundo: str
-        cor_texto: str
-        
+    texto: str
+    cor_fundo: str = Field(pattern=PADRAO_COR)
+    cor_texto: str = Field(pattern=PADRAO_COR)
+
+
 @app.post("/api/gerar_slides")
 def gerar(pedido: Pedido):
-        fundo = fundo = RGBColor.from_string(pedido.cor_fundo.replace("#", ""))
-        letra = RGBColor.from_string(pedido.cor_texto.replace("#", ""))
+    if len(dividir_blocos(pedido.texto)) == 0:
+        raise HTTPException(status_code=400, detail="O texto está vazio.")
 
-        dados = gerar_slides(pedido.texto, fundo, letra)
-        
-        return Response(
+    fundo = RGBColor.from_string(pedido.cor_fundo.replace("#", ""))
+    letra = RGBColor.from_string(pedido.cor_texto.replace("#", ""))
+
+    dados = gerar_slides(pedido.texto, fundo, letra)
+
+    return Response(
         content=dados,
         media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
         headers={"Content-Disposition": "attachment; filename=slides.pptx"},
